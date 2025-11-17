@@ -9,13 +9,17 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    // =======================
+    // WEB AUTH
+    // =======================
+
     // Form Register
     public function showRegister()
     {
         return view('auth.register');
     }
 
-    // Proses Register
+    // Proses Register (Web)
     public function register(Request $request)
     {
         $request->validate([
@@ -39,7 +43,7 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // Proses Login
+    // Proses Login (Web)
     public function login(Request $request)
     {
         $data = $request->validate([
@@ -52,5 +56,47 @@ class AuthController extends Controller
         }
 
         return back()->with('error', 'Email atau password salah');
+    }
+
+    // =======================
+    // API AUTH
+    // =======================
+
+    // API Register
+    public function apiRegister(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:4'
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Register berhasil',
+            'data' => $user
+        ]);
+    }
+
+    // API Login
+    public function apiLogin(Request $request)
+    {
+        if (!Auth::attempt($request->only('email','password'))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Email atau password salah'
+            ], 401);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Login berhasil'
+        ]);
     }
 }
